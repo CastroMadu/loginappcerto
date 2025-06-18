@@ -1,47 +1,77 @@
-import React, { FlatList, StyleSheet, Button, Text, View, TouchableOpacity} from  'react-native';
 import auth from '@react-native-firebase/auth';
-import Item from "../../components/Itens";
-import AddButton from '../../components/AddButton';
- 
+import firestore from '@react-native-firebase/firestore';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
+
+import Item from '../../components/Itens'; // seu componente de lista
+import BtnAdd from '../../components/AddButton'; // seu botão flutuante
+import LoggedUser from '../../components/LoggedUser'; // seu componente de usuário logado
+
+interface Tarefa {
+  id: string;
+  titulo: string;
+}
+
 const Page = () => {
-    const user = auth().currentUser;
- 
-    const tarefas =[
-        {titulo: "Tarefa 0001"},
-        {titulo: "Tarefa 0002"},
-        {titulo: "Tarefa 0003"},
-        {titulo: "Tarefa 0004"},
-        {titulo: "Tarefa 0005"}              
-    ];
- 
-    return (
-        <View>
-            <Text> Bem vindo {user?.email}</Text>
-            <Button title="Sair" onPress={() => auth().signOut()}/>
-            <Item
-            data={tarefas}
-            onDelete={()=> alert('evento do componente de exclusão')}
-           onEdit={() => alert('evento do componente de edição')}/>
-        <AddButton />
-        </View>
-    );
-};
- 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingTop: 22,
-    },
-    item: {
-        padding: 10,
-        fontSize: 18,
-        height: 65,
-        flex: 1,
-        justifyContent: "space-between"
-    },
-    button:{
-        width:"100%",
-        alignItems: "center"
+  const user = auth().currentUser;
+  const router = useRouter();
+  const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribe = firestore()
+      .collection('tarefas')
+      .where('userId', '==', user.uid)
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(
+        snapshot => {
+          const lista = snapshot.docs.map(doc => ({
+            id: doc.id,
+            titulo: doc.data().titulo,
+          }));
+          setTarefas(lista);
+        },
+        error => {
+          console.error('Erro ao buscar tarefas:', error);
+          Alert.alert('Erro', 'Não foi possível carregar as tarefas');
+        }
+      );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleDeleteTask = async (id: string) => {
+    try {
+      await firestore().collection('tarefas').doc(id).delete();
+    } catch (error) {
+      console.error('Erro ao deletar tarefa:', error);
+      Alert.alert('Erro', 'Não foi possível excluir a tarefa');
     }
+  };
+
+  const handleLogout = () => {
+    auth().signOut();
+  };
+
+  return (
+    <View style={styles.container}>
+      <LoggedUser email={user?.email ?? 'Convidado'} onLogout={handleLogout} />
+
+      <Item
+        data={tarefas}
+        onDelete={handleDeleteTask}
+        onEdit={(id, titulo) => router.push({ pathname: '(auth)/editar-tarefa', params: { id, titulo } })}
+      />
+
+      <BtnAdd onPress={() => router.push('(auth)/nova-tarefa')} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingTop: 22 },
 });
+
 export default Page;

@@ -1,18 +1,18 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, Text, Alert } from 'react-native';
- 
-const AddButton = () => {
-  const handleAddTask = () => {
-    Alert.alert('Adicionar Tarefa', 'Você clicou para adicionar uma tarefa.');
-  };
- 
+import { TouchableOpacity, StyleSheet, Text } from 'react-native';
+
+interface Props {
+  onPress: () => void;
+}
+
+const AddButton = ({ onPress }: Props) => {
   return (
-    <TouchableOpacity style={styles.button} onPress={handleAddTask}>
+    <TouchableOpacity style={styles.button} onPress={onPress}>
       <Text style={styles.text}>+</Text>
     </TouchableOpacity>
   );
 };
- 
+
 const styles = StyleSheet.create({
   button: {
     position: 'absolute',
@@ -36,5 +36,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
- 
+
 export default AddButton;
