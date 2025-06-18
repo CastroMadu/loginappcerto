@@ -62,10 +62,10 @@ const Page = () => {
       <Item
         data={tarefas}
         onDelete={handleDeleteTask}
-        onEdit={(id, titulo) => router.push({ pathname: '(auth)/editar-tarefa', params: { id, titulo } })}
+        onEdit={(id, titulo) => router.push({ pathname: '/(auth)/editar-tarefa', params: { id, titulo } })}
       />
 
-      <BtnAdd onPress={() => router.push('(auth)/nova-tarefa')} />
+      <BtnAdd onPress={() => router.push('/(auth)/nova-tarefa')} />
     </View>
   );
 };
